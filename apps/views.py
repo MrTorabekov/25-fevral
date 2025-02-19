@@ -1,12 +1,20 @@
-from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from apps.serializers import RegisterSerializer, LoginSerializer
+from apps.models import Category
+from apps.serializers import RegisterSerializer, LoginSerializer, UserSerializer, CategorySerializer
+from django.contrib.auth import get_user_model
+
+
+User = get_user_model()
+
+
 
 
 class LoginApiView(APIView):
@@ -43,8 +51,6 @@ class LoginApiView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-
 class RegisterApiView(APIView):
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
@@ -58,11 +64,43 @@ class RegisterApiView(APIView):
             return Response(
                 {
                     "refresh": str(refresh),
-                    "access": access_token,
-                    "user" : serializer.data
+                    "access": access_token
                 },status=status.HTTP_201_CREATED
             )
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-User = get_user_model()
+
+class UserUpdateView(APIView):
+    parser_classes = (MultiPartParser, FormParser)
+    permission_classes = [IsAuthenticated]  # Faqat autentifikatsiyalangan user
+
+    @extend_schema(
+        request=UserSerializer,
+        responses={200: "User updated successfully"}
+    )
+    def put(self, request, pk):
+        if request.user.id != pk:
+            return Response(
+                {"detail": "Siz faqat o'z profilingizni yangilashingiz mumkin."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = UserSerializer(instance=request.user, data=request.data, partial=False)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "User updated successfully"}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class CategoryViewSet(APIView):
+    def get(self, request):
+        categories = Category.objects.all()
+
+
+        categories = sorted(categories, key=lambda c: (
+            0 if c.product_type == 'mobile phone' else 1,
+            c.name
+        ))
+
+        serializer = CategorySerializer(categories, many=True)
+        return Response(serializer.data)
