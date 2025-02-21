@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from apps.models import User,Category
+from apps.models import User,Category,Address,Brand,Product
+
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -32,8 +33,22 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ('first_name', 'last_name', 'username', 'email', 'password')
 
+class AddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Address
+        fields = '__all__'  # Barcha maydonlarni qo'shamiz
+
+class BrandSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Brand
+        fields = ('id', 'name')
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = '__all__'
+        fields = ('id', 'name')
+
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ('id', 'name', 'description', 'price', 'stock')

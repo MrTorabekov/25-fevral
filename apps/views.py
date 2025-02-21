@@ -1,4 +1,5 @@
 from django.contrib.auth.hashers import make_password
+from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -7,8 +8,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from apps.models import Category
-from apps.serializers import RegisterSerializer, LoginSerializer, UserSerializer, CategorySerializer
+from apps.admin import Address, Brand, Category, Product
+from apps.serializers import RegisterSerializer, LoginSerializer, UserSerializer, AddressSerializer, BrandSerializer, \
+    CategorySerializer, ProductSerializer
 from django.contrib.auth import get_user_model
 
 
@@ -50,7 +52,6 @@ class LoginApiView(APIView):
             return Response({"detail": "Invalid password or email"}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 class RegisterApiView(APIView):
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
@@ -69,7 +70,6 @@ class RegisterApiView(APIView):
             )
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class UserUpdateView(APIView):
     parser_classes = (MultiPartParser, FormParser)
@@ -92,15 +92,88 @@ class UserUpdateView(APIView):
             return Response({"message": "User updated successfully"}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class CategoryViewSet(APIView):
+class CategoryAPI(APIView):
     def get(self, request):
         categories = Category.objects.all()
+        serializer = CategorySerializer(categories)
+        return Response(serializer.data)
 
+class ProductAPI(APIView):
+    parser_classes = (MultiPartParser, FormParser)
 
-        categories = sorted(categories, key=lambda c: (
-            0 if c.product_type == 'mobile phone' else 1,
-            c.name
-        ))
+    @extend_schema(
+        request=ProductSerializer,
+        responses={200: "Product create successfully"}
+    )
+    def get(self, request):
+        products = Product.objects.all()
+        serializer = ProductSerializer(products, many=True)
+        return Response(serializer.data)
 
-        serializer = CategorySerializer(categories, many=True)
+    def post(self, request):
+        serializer = ProductSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AddressListCreateAPIView(APIView):
+    """
+    GET - Address ro'yxatini olish
+    POST - Yangi Address qo'shish
+    """
+
+    def get(self, request):
+        addresses = Address.objects.all()
+        serializer = AddressSerializer(addresses, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = AddressSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AddressDetailAPIView(APIView):
+    """
+    GET - Bitta Address ma'lumotlarini olish
+    PUT - Address ma'lumotlarini yangilash
+    DELETE - Addressni o'chirish
+    """
+
+    def get_object(self, pk):
+        try:
+            return Address.objects.get(pk=pk)
+        except Address.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        address = self.get_object(pk)
+        if address is None:
+            return Response({"error": "Address not found"}, status=status.HTTP_404_NOT_FOUND)
+        serializer = AddressSerializer(address)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        address = self.get_object(pk)
+        if address is None:
+            return Response({"error": "Address not found"}, status=status.HTTP_404_NOT_FOUND)
+        serializer = AddressSerializer(address, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        address = self.get_object(pk)
+        if address is None:
+            return Response({"error": "Address not found"}, status=status.HTTP_404_NOT_FOUND)
+        address.delete()
+        return Response({"message": "Address deleted"}, status=status.HTTP_204_NO_CONTENT)
+
+class BrandAPI(APIView):
+    def get(self, request):
+        brands = Brand.objects.all()
+        serializer = BrandSerializer(brands, many=True)
         return Response(serializer.data)
