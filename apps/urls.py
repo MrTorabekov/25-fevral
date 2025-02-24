@@ -1,6 +1,6 @@
 from django.urls import path
 
-from apps.views import RegisterApiView, LoginApiView, UserUpdateView, BrandAPI, CategoryAPI, ProductAPI
+from apps.views import RegisterApiView, LoginApiView, UserUpdateView, BrandAPI, CategoryAPI, ProductAPI,WishlistListCreateView
 
 urlpatterns = [
     path("register/", RegisterApiView.as_view(), name="register"),
@@ -9,4 +9,6 @@ urlpatterns = [
     path("category/", CategoryAPI.as_view(), name="category"),
     path("product/", ProductAPI.as_view(), name="product"),
     path("login/", LoginApiView.as_view(), name="login"),
+    path('wishlist/', WishlistListCreateView.as_view(), name='wishlist-list'),
+
 ]

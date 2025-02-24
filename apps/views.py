@@ -1,5 +1,4 @@
 from django.contrib.auth.hashers import make_password
-from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -7,16 +6,15 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from rest_framework import generics
+from .models import Wishlist
+from .serializers import WishlistSerializer
 from apps.admin import Address, Brand, Category, Product
 from apps.serializers import RegisterSerializer, LoginSerializer, UserSerializer, AddressSerializer, BrandSerializer, \
     CategorySerializer, ProductSerializer
 from django.contrib.auth import get_user_model
 
-
 User = get_user_model()
-
-
 
 
 class LoginApiView(APIView):
@@ -52,24 +50,35 @@ class LoginApiView(APIView):
             return Response({"detail": "Invalid password or email"}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class RegisterApiView(APIView):
+    @extend_schema(
+        summary="User Registration",
+        description="Register a new user with username, email, password, and role.",
+        request=RegisterSerializer,  # Specify request body serializer
+        responses={
+            201: OpenApiParameter(name="Tokens", description="JWT access and refresh tokens"),
+            400: OpenApiParameter(name="Errors", description="Validation errors")
+        },
+        tags=["User Registration"]
+    )
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save(password=make_password(serializer.validated_data['password']))
-            #Generate JWT tokens
+            # Generate JWT tokens
 
             refresh = RefreshToken.for_user(user)
             access_token = str(refresh.access_token)
 
-            return Response(
-                {
-                    "refresh": str(refresh),
-                    "access": access_token
-                },status=status.HTTP_201_CREATED
+            return Response({
+                "refresh": str(refresh),
+                "access": access_token,
+            }, status=status.HTTP_201_CREATED
             )
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class UserUpdateView(APIView):
     parser_classes = (MultiPartParser, FormParser)
@@ -92,11 +101,13 @@ class UserUpdateView(APIView):
             return Response({"message": "User updated successfully"}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class CategoryAPI(APIView):
     def get(self, request):
         categories = Category.objects.all()
         serializer = CategorySerializer(categories)
         return Response(serializer.data)
+
 
 class ProductAPI(APIView):
     parser_classes = (MultiPartParser, FormParser)
@@ -117,6 +128,7 @@ class ProductAPI(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class AddressListCreateAPIView(APIView):
     """
     GET - Address ro'yxatini olish
@@ -134,6 +146,7 @@ class AddressListCreateAPIView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class AddressDetailAPIView(APIView):
     """
@@ -172,8 +185,16 @@ class AddressDetailAPIView(APIView):
         address.delete()
         return Response({"message": "Address deleted"}, status=status.HTTP_204_NO_CONTENT)
 
+
 class BrandAPI(APIView):
     def get(self, request):
         brands = Brand.objects.all()
         serializer = BrandSerializer(brands, many=True)
         return Response(serializer.data)
+
+
+class WishlistListCreateView(generics.ListCreateAPIView):
+    queryset = Wishlist.objects.all()  # Hamma wishlistlar chiqadi
+    serializer_class = WishlistSerializer
+    permission_classes = [IsAuthenticated]
+

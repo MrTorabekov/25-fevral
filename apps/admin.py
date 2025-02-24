@@ -22,3 +22,8 @@ class Category(admin.ModelAdmin):
 @admin.register(Product)
 class Product(admin.ModelAdmin):
     list_display = ('id', 'name', 'description', 'price', 'category', 'brand')
+
+
+@admin.register(Wishlist)
+class Wishlist(admin.ModelAdmin):
+    list_display = ('id','user','product','created_at')
