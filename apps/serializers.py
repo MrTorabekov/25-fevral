@@ -1,6 +1,6 @@
+from .models import Wishlist
 from rest_framework import serializers
-from apps.models import User,Category,Address,Brand,Product
-
+from apps.models import User,Category,Address,Brand,Product,Review,ProductImage,Supplier
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -23,6 +23,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(**validated_data)
         return user
 
+
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
@@ -33,32 +34,55 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ('first_name', 'last_name', 'username', 'email', 'password')
 
+
 class AddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = Address
         fields = '__all__'  # Barcha maydonlarni qo'shamiz
+
 
 class BrandSerializer(serializers.ModelSerializer):
     class Meta:
         model = Brand
         fields = ('id', 'name')
 
+
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ('id', 'name')
+
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ('id', 'name', 'description', 'price', 'stock')
 
-from rest_framework import serializers
-from .models import Wishlist
+
+class ProductImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductImage
+        fields = ('id', 'product', 'image_url')
+
+class SupplierSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Supplier
+        fields = '__all__'
+
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = ('id', 'user', 'product', 'rating', 'comment')
+
 
 class WishlistSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField()  # User nomi bilan keladi
+    product = serializers.StringRelatedField()
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
 
     class Meta:
         model = Wishlist
-        fields = ['id', 'user', 'product', 'created_at']
+        fields = ['id', 'user','product', 'created_at']
+
+
+

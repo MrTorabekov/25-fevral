@@ -27,3 +27,5 @@ class Product(admin.ModelAdmin):
 @admin.register(Wishlist)
 class Wishlist(admin.ModelAdmin):
     list_display = ('id','user','product','created_at')
+
+admin.site.register(Supplier)
