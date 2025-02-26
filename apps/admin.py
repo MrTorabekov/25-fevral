@@ -3,29 +3,36 @@ from apps.models import User, Address, Brand, Category, Product, ProductImage,\
                        Supplier, Order, OrderItem, CartItem, Wishlist, Review, \
                        Comment, Deal
 
-@admin.register(User)
-class User(admin.ModelAdmin):
-    list_display = ('id', 'roles', 'first_name', 'last_name', 'email')
+admin.site.register(User)
 
-@admin.register(Address)
-class Address(admin.ModelAdmin):
-    list_display = ('id', 'address_line1', 'address_line2', 'city', 'state', 'zip_code', 'country')
+admin.site.register(Address)
 
-@admin.register(Brand)
-class Brand(admin.ModelAdmin):
-    list_display = ('id', 'name')
+admin.site.register(Brand)
 
-@admin.register(Category)
-class Category(admin.ModelAdmin):
-    list_display = ('id', 'name', 'category')
+admin.site.register(Category)
 
 @admin.register(Product)
-class Product(admin.ModelAdmin):
-    list_display = ('id', 'name', 'description', 'price', 'category', 'brand')
+class ProductAdmin(admin.ModelAdmin):
+    list_display = ("id", "name", "description", "price", "stock")
 
+admin.site.register(ProductImage)
 
-@admin.register(Wishlist)
-class Wishlist(admin.ModelAdmin):
-    list_display = ('id','user','product','created_at')
+admin.site.register(Review)
 
-admin.site.register(Supplier)
+admin.site.register(Wishlist)
+
+@admin.register(Supplier)
+class SupplierAdmin(admin.ModelAdmin):
+    list_display = ("id", "name")
+
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ("id", "user", "total_price", "status")
+
+admin.site.register(Comment)
+
+admin.site.register(Deal)
+
+admin.site.register(OrderItem)
+
+admin.site.register(CartItem)
